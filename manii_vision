@@ -1,0 +1,534 @@
+Manii V2 PRD
+Manii — Product Requirements Document (v2)
+Version: 2.0 (Redesign)
+Platform: iOS (Expo React Native)
+Business Model: Premium Subscription (No Free Tier)
+Last Updated: July 2026
+⸻
+1. Product Vision
+Manii is an AI-powered manifestation companion that helps users reprogram their subconscious through personalized audio experiences.
+Unlike generic manifestation apps or YouTube recordings, Manii creates completely personalized content based on each user’s unique goals, circumstances and desired future.
+Rather than being just an audio generator, Manii becomes an intelligent companion that understands every area of a user’s life and continuously creates highly personalised manifestation experiences.
+The product should feel calm, premium, intelligent and effortless.
+The design philosophy is inspired by the simplicity of ChatGPT, the polish of Apple, and the calming atmosphere of modern meditation apps.
+⸻
+2. Core Philosophy
+Manifestation is not simply listening to affirmations.
+It is consistently entering the emotional state of already having your desired reality.
+Manii exists to make this effortless.
+The app should become something users open every day—not because they have to, but because it feels like part of their identity.
+Every feature should answer one question:
+“Does this help the user believe, feel or embody their desired reality?”
+If not, it doesn’t belong.
+⸻
+3. Target Audience
+Primary
+People already interested in:
+Neville Goddard
+Law of Assumption
+SATS
+Manifestation
+Personal development
+Meditation
+Secondary
+General wellness users looking for:
+Guided meditations
+Sleep audios
+Subliminals
+Relaxation
+Mindset improvement
+Self-improvement
+⸻
+4. Product Positioning
+Manii is not:
+a meditation app
+a sleep app
+an affirmation app
+an AI chatbot
+It combines elements of all of these into one personalised subconscious transformation platform.
+The AI remembers what matters to the user and creates content tailored specifically to them.
+⸻
+5. Core Product Structure
+The application contains three primary tabs.
+⸻
+Tab 1 — Sleep
+Status at Launch
+Locked
+Display:
+Sleep Tracking
+Coming Soon
+The page should tease future functionality without distracting from the core experience.
+Future functionality may include:
+Sleep tracking
+Smart alarms
+Sleep score
+Morning manifestation reminders
+Sleep consistency
+Listening analytics
+⸻
+Tab 2 — Home (Primary Screen)
+This is where users spend nearly all of their time.
+The experience should feel heavily inspired by ChatGPT.
+Layout
+Top Bar
+Greeting
+Current Journey
+Profile icon (top right)
+Main Area
+Conversation interface between the user and Manii AI.
+Users can:
+ask questions
+explain goals
+provide updates
+request new manifestation content
+refine previous content
+upload additional context
+Floating Action Button
+Large circular “+” button.
+Creates a new Journey.
+Bottom Navigation remains visible.
+⸻
+Sidebar
+Accessible by swiping or tapping.
+Displays all Journeys.
+Examples:
+Dream Career
+Perfect Relationship
+Financial Freedom
+Self Concept
+Business Growth
+Physical Transformation
+Users can:
+create journeys
+archive journeys
+rename journeys
+search journeys
+This should feel very similar to ChatGPT conversations.
+⸻
+6. Journeys
+A Journey is the central organisational system of the app.
+Every manifestation belongs inside a Journey.
+Each Journey stores long-term context.
+Examples:
+“I want to become financially independent.”
+“I want to build a successful business.”
+“I want to manifest my soulmate.”
+The AI remembers everything inside the Journey.
+Every new piece of content generated uses all previous context.
+Users never need to repeat themselves.
+⸻
+7. AI Memory
+Each Journey maintains its own memory.
+It stores:
+goals
+previous conversations
+manifestation history
+generated audios
+user preferences
+desired outcomes
+important life details
+The AI should continuously improve its understanding over time.
+The experience should feel like speaking to someone who knows your life.
+⸻
+8. Creating Content
+Instead of pressing a “Generate SATS” button, users simply ask naturally.
+Examples:
+“Create a SATS session for my promotion.”
+“I want a meditation for confidence.”
+“Make a subliminal for attracting abundance.”
+“Generate a relaxing sleep audio.”
+The AI determines the correct workflow.
+⸻
+9. Audio Types
+Launch includes multiple content types.
+Personalized SATS
+Primary feature.
+Deep immersive manifestation sessions.
+⸻
+Guided Meditation
+Different lengths.
+Focused on relaxation, mindfulness and visualization.
+⸻
+Subliminal Audio
+Positive subconscious affirmations.
+Minimal conscious attention required.
+⸻
+Frequency Audio
+Simple frequency tracks.
+Examples:
+Sleep
+Focus
+Calm
+Relaxation
+Manifestation
+⸻
+Ambient Audio
+No narration.
+Examples:
+Rain
+Ocean
+Forest
+Brown Noise
+White Noise
+Pink Noise
+Fireplace
+⸻
+10. Audio Lengths
+Available durations:
+5 minutes
+10 minutes
+15 minutes
+20 minutes
+30 minutes
+45 minutes
+60 minutes
+90 minutes
+120 minutes
+8 hours
+Long sessions use intelligent looping to minimise generation costs.
+———
+10A. Sleep Experience
+Sleep is a foundational pillar of Manii.
+The purpose of the Sleep experience is not to compete directly with dedicated sleep tracking applications.
+Instead, it exists to strengthen Manii’s core mission:
+Helping users optimise their subconscious mind during sleep.
+Manifestation is simply the primary application of that mission.
+Every sleep feature should reinforce one or more of the following:
+Better sleep habits
+Greater consistency
+Stronger nightly routines
+Improved subconscious conditioning
+Increased daily engagement
+The Sleep experience should feel calming, encouraging and insightful rather than clinical or overwhelming.
+⸻
+Core Sleep Philosophy
+Rather than presenting users with large amounts of scientific data, Manii focuses on actionable and emotionally meaningful insights.
+Users should finish every morning feeling that they are making progress—not analysing spreadsheets.
+Where traditional sleep apps ask:
+“How did you sleep?”
+Manii asks:
+“How prepared is your mind for tonight’s subconscious conditioning?”
+⸻
+Sleep Dashboard
+The Sleep tab should become a personalised morning dashboard.
+Example layout:
+Good Morning
+Sleep Duration
+Sleep Quality
+Subconscious Readiness
+Listening Completion
+Sleep Consistency
+Current Sleep Streak
+Morning Insight
+Rather than presenting raw numbers alone, every metric should include meaningful AI-generated explanations that connect the user’s sleep habits with their nightly routine.
+⸻
+Apple Health Integration
+Apple Health should be deeply integrated into the product.
+Whenever permission is granted, Manii should automatically import available sleep data to reduce user friction.
+Imported data may include:
+Sleep duration
+Bedtime
+Wake time
+Sleep consistency
+Time in bed
+Apple Health should become the primary source of sleep information whenever available.
+Users should never have to manually enter sleep data.
+⸻
+Smart Alarm
+The Smart Alarm is one of Manii’s flagship premium features.
+Using available sleep information, Manii attempts to wake the user during an appropriate wake window rather than at a single fixed moment.
+The objective is to help users wake feeling more refreshed while naturally extending the nightly manifestation routine into the morning.
+The wake-up experience should feel calm and intentional.
+Example flow:
+Gentle ambient audio fades in.
+Optional narrator voice greets the user.
+Morning Briefing begins.
+Alarm ends naturally.
+⸻
+Morning Briefing
+Every morning Manii generates a personalised briefing.
+This should become one of the product’s signature experiences.
+The briefing combines:
+Previous night’s sleep
+Current Journeys
+AI memory
+Listening completion
+Sleep consistency
+Upcoming recommendations
+Example:
+“Good morning. You slept for 7 hours and 42 minutes and completed your entire listening session. Your consistency has improved throughout the week, creating excellent conditions for tonight’s subconscious conditioning. Based on your recent conversations, I’ve slightly refined tonight’s Financial Freedom Journey. Have an amazing day.”
+Every briefing should feel personal, encouraging and unique.
+⸻
+Sleep Metrics
+Rather than overwhelming users with highly technical sleep analytics, Manii focuses on a carefully selected set of meaningful metrics.
+Core metrics include:
+Sleep Duration
+Sleep Quality
+Sleep Consistency
+Listening Completion
+Sleep Streak
+Morning Readiness
+Subconscious Readiness
+These metrics should be simple to understand and visually beautiful.
+⸻
+Subconscious Readiness
+Subconscious Readiness is Manii’s own wellness metric.
+It is designed to estimate how well a user’s recent sleep habits support their nightly manifestation routine.
+The score may consider factors such as:
+Sleep duration
+Bedtime consistency
+Listening completion
+Nightly routine consistency
+Sleep interruptions
+The purpose of this score is motivational rather than clinical.
+It should encourage healthy routines without making scientific claims about subconscious change.
+⸻
+Sound Recording
+Premium users may optionally enable overnight sound recording.
+This feature can identify events such as:
+Snoring
+Talking during sleep
+Coughing
+Environmental disturbances
+The purpose is to provide additional context that may help users improve their sleep environment.
+Recordings should always remain private and users must explicitly opt in before any overnight recording begins.
+⸻
+Sleep Insights
+Premium subscribers receive AI-generated sleep insights.
+Examples include:
+Changes in bedtime consistency
+Listening habit improvements
+Long-term sleep trends
+Recommended bedtime adjustments
+Suggested audio durations
+Personalised nightly recommendations
+Insights should remain encouraging and practical rather than medical.
+⸻
+Free vs Premium Sleep Features
+Available During Trial and Basic Access
+Apple Health integration
+Sleep duration
+Bedtime
+Wake time
+Basic listening history
+Sleep streak
+Basic alarm
+These features establish Manii as a useful daily companion.
+⸻
+Premium Features
+Premium subscribers unlock the complete Sleep experience.
+This includes:
+Smart Alarm
+Morning Briefings
+Subconscious Readiness
+AI Sleep Insights
+Sound recording
+Sleep consistency coaching
+Personalised bedtime reminders
+Advanced sleep trends
+Future sleep innovations
+⸻
+Long-Term Vision
+The Sleep experience should become one of the primary reasons users continue opening Manii every morning.
+The daily product loop becomes:
+Evening
+↓
+AI Conversation
+↓
+Personalised Audio
+↓
+Sleep Tracking
+↓
+Smart Alarm
+↓
+Morning Briefing
+↓
+Daily Life
+↓
+Reflection
+↓
+Repeat
+This transforms Manii from an audio generation application into a complete subconscious conditioning platform that supports users before sleep, during sleep and immediately after waking.
+⸻
+11. Narration
+Voice cloning will not be included in Version 1.
+Instead, Manii includes a curated library of premium narrator voices.
+Users simply choose their preferred narrator.
+Future updates may introduce:
+Voice cloning
+Celebrity-style voices (where legally permitted)
+Multiple narrator profiles
+⸻
+12. AI Stack
+Two separate AI systems are used.
+Conversation AI
+Purpose:
+General conversations.
+Low-cost model.
+Responsibilities:
+answering questions
+discussing goals
+collecting context
+remembering journeys
+recommending content
+Optimised for speed and cost.
+⸻
+Generation AI
+Used only when creating premium content.
+Responsibilities:
+SATS scripts
+Meditations
+Subliminal scripts
+Audio structure
+Uses higher-quality language models.
+Generated scripts are then converted into speech using ElevenLabs.
+⸻
+13. User Experience Principles
+The app should feel:
+Premium
+Minimal
+Calm
+Intelligent
+Personal
+Beautiful
+Avoid:
+clutter
+complicated navigation
+technical terminology
+overwhelming dashboards
+The experience should always feel effortless.
+⸻
+14. Design Language
+Dark-first interface.
+Soft gradients.
+Muted purples.
+Muted mauves.
+Warm whites.
+Minimal animations.
+Large spacing.
+Rounded cards.
+Beautiful typography.
+Every interaction should feel intentional.
+⸻
+15. Monetisation Strategy
+Manii operates on a premium subscription model designed to maximise long-term customer value while maintaining healthy AI margins.
+The business model is built around an evolving AI companion rather than a one-time content generator.
+Users are not subscribing to create audio.
+They are subscribing to an AI that continuously understands them better, evolves alongside their journey, and creates increasingly personalised subconscious experiences.
+⸻
+15.1 Three-Day Premium Trial
+Rather than offering a permanent free tier, every new user receives a 3-day Premium Trial.
+Access to the trial requires selecting a subscription plan and providing payment information before the trial begins.
+The user will not be charged until the trial expires.
+This approach allows users to experience the full premium product while significantly increasing conversion rates compared to a restricted free tier.
+The trial includes:
+Full Premium experience
+Up to 20 AI conversations
+2 premium audio generations
+Maximum audio length of 30 minutes
+1 active Journey
+Once any trial limit is reached, users are prompted to subscribe immediately or wait until their trial period ends.
+⸻
+15.2 Why No Permanent Free Tier
+Manii intentionally avoids a permanent free plan.
+Reasons include:
+Preventing unlimited AI costs.
+Reducing abuse through multiple account creation.
+Creating urgency to subscribe.
+Maintaining the perception of Manii as a premium product.
+The free trial is designed to demonstrate value without creating an ongoing operational cost.
+⸻
+16. Subscription Plans
+Manii launches with two subscription tiers.
+Pricing may be refined prior to launch following AI cost testing.
+⸻
+Manii Premium
+Indicative pricing:
+Weekly
+€14.99/month
+€149.99/year
+Includes:
+Unlimited AI conversations (fair usage policy)
+Multiple Journeys
+Journey memory
+AI manifestation coaching
+Personalised SATS generation
+Guided meditations
+Subliminal generation
+Frequency audios
+Ambient sound library
+Future sleep tracking features
+Regular feature updates
+Each billing cycle includes a monthly allocation of AI Generation Credits.
+These credits are used whenever premium content is generated.
+Listening to previously generated audio is always unlimited and does not consume credits.
+⸻
+Manii Premium+
+Indicative pricing:
+Weekly
+Higher monthly subscription
+Higher annual subscription
+Includes everything in Premium plus:
+Larger monthly AI credit allowance
+Higher generation limits
+Priority generation
+Early access to experimental AI features
+Premium narrator voices
+Future advanced personalisation features
+⸻
+17. AI Generation Credit System
+Instead of limiting users by the number of audios they may create, Manii uses an AI Credit System.
+Credits are consumed whenever AI generation incurs a meaningful operational cost.
+Examples include:
+SATS generation
+Guided meditation generation
+Subliminal creation
+Long-form audio generation
+Future premium AI features
+Conversation with Manii AI remains effectively unlimited under a fair usage policy and does not normally consume generation credits.
+This provides flexibility for future pricing while ensuring AI costs remain predictable.
+Unused credits do not roll over unless explicitly included as a future subscription benefit.
+Additional credit packs may be purchased separately.
+Example packs:
+Small Credit Pack
+Medium Credit Pack
+Large Credit Pack
+This allows power users to continue creating content without upgrading to a higher subscription tier.
+⸻
+18. Subscription Philosophy
+The subscription is intentionally designed around continuous value rather than ownership of generated content.
+Users are subscribing to an AI companion that:
+Learns continuously.
+Remembers every Journey.
+Adapts to life changes.
+Creates increasingly personalised content.
+Evolves alongside the user.
+Generated audio belongs to the user.
+If a subscription is cancelled:
+Users retain access to previously generated audio for playback.
+However, subscription-only features become unavailable, including:
+New AI conversations
+New content generation
+Journey memory updates
+AI coaching
+Future sleep tracking features
+Ongoing product improvements
+This creates goodwill by allowing users to keep what they have already created while maintaining a compelling reason to remain subscribed.
+⸻
+19. Business Principles
+Every monetisation decision should satisfy the following principles:
+Deliver genuine value before requesting payment.
+Keep AI operational costs significantly below subscription revenue.
+Encourage long-term subscriptions over one-time purchases.
+Avoid manipulative pricing or dark patterns.
+Allow users to retain access to content they have already created.
+Reward long-term customers with continual product improvements rather than locking essential functionality behind increasingly expensive plans.
+The objective is to build a sustainable subscription business where users continue paying because Manii becomes an indispensable part of their daily manifestation practice—not because they fear losing access to their existing content.
+⸻
+20. Success Metric
+The goal is not simply to create audio.
+The goal is for users to feel that Manii genuinely understands them.
+When someone thinks:
+“I couldn’t imagine using anyone else’s manifestation app.”
+then Manii has succeeded.
+
