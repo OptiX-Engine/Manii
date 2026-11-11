@@ -1,0 +1,300 @@
+Manii — Technical Overview
+Version: 1.1 Platform: iOS (Expo / React Native) Companion to: Manii Product Requirements Document (v2) Last updated: July 2026
+This document describes how Manii is built: the architecture, the major components, how they talk to each other, and the key technical decisions and risks. It deliberately excludes database tables, schemas, and security policies — those live in a separate data-model document.
+What changed in v1.1 — decisions locked since v1.0: Suno is out of scope for v1; RevenueCat is confirmed; Journey memory uses a two-tier (Journey + global user) model; content generation is triggered through AI tool-calling into a human-confirmed modal, never by the model alone; quick-action buttons and context-aware suggestion chips are defined; generation runs as a background job that locks only its own conversation; and credit allowances/pack pricing scale by plan and billing period. Frequency and ambient audio are confirmed as cheap/free asset paths outside the credit system.
+
+1. Purpose & Scope
+The goal of this document is to give anyone working on Manii (or evaluating it) a clear mental model of the system before touching code. It covers the client app, the backend, the AI layer, the audio pipeline, subscriptions, and the credit system, and it flags the load-bearing decisions that shape everything downstream.
+Two framing facts drive most of the architecture:
+AI and audio synthesis cost real money per request. The whole system is designed so that expensive operations happen server-side, are metered, and can never be triggered for free or abused.
+Generation is slow; conversation is fast. These are treated as two different systems with different models, different latency expectations, and different cost profiles.
+
+2. Architectural Principles
+The client is never trusted with secrets or cost decisions. No third-party API key (OpenAI, Claude, ElevenLabs) ever ships in the app. Every paid call is proxied through the backend, which authenticates the user, checks entitlements and credits, then makes the call.
+Expensive work is asynchronous. Audio generation is a job, not a request/response. The client submits it and is notified when it's done, rather than holding a connection open.
+A human tap always triggers spend. The AI can propose generating content, but it never spends a credit on its own — generation only fires after the user confirms in a modal (see §8).
+State of record lives in the backend. Credits, entitlements, Journey memory, and generated-audio metadata are authoritative in the database, not on the device.
+Fail closed on money. If credit balance or subscription status can't be verified, the action is denied rather than allowed.
+The app should feel calm and instant even when the backend is slow. Optimistic UI, clear progress states, and local caching hide latency from the user.
+
+3. System Architecture (High Level)
+┌──────────────────────────────────────────────────────────────┐
+│                     iOS App (Expo / RN)                        │
+│                                                                │
+│   Sleep tab      Home (chat)      Profile / Journeys sidebar   │
+│                       │                                        │
+│         audio playback │ chat UI │ paywall (RevenueCat)        │
+└───────────────────────┼────────────────────────────────────────┘
+                        │  HTTPS (authenticated)
+                        ▼
+┌──────────────────────────────────────────────────────────────┐
+│                 Supabase (Backend-as-a-Service)                │
+│                                                                │
+│   Auth   │   Database   │   Storage (audio)   │  Realtime      │
+│                     │                                          │
+│              Edge Functions  ← the secure "brain"              │
+│        (auth check → entitlement/credit check → call AI)       │
+└───────┬───────────────────┬───────────────────┬───────────────┘
+        │                   │                   │
+        ▼                   ▼                   ▼
+  Conversation AI     Generation AI        ElevenLabs
+  (OpenAI / Claude    (higher-quality      (text → speech)
+   low-cost model)     model for scripts)
+                                          
+        ▲
+        │  server-to-server webhooks (subscription events)
+   RevenueCat  ←→  App Store (StoreKit / IAP)
+
+Everything expensive or trust-sensitive sits behind the Supabase Edge Function layer. The client only ever talks to Supabase; Supabase talks to the AI and audio providers.
+
+4. Technology Stack
+Layer
+Technology
+Role
+Client
+Expo (React Native), TypeScript
+The iOS app
+Navigation
+Expo Router / React Navigation
+Three-tab structure + sidebar
+Audio playback
+expo-audio (or expo-av)
+Playback, background audio, looping
+Backend
+Supabase
+Auth, database, storage, edge functions, realtime
+Server logic
+Supabase Edge Functions (Deno / TypeScript)
+Secure proxy + orchestration
+Conversation AI
+OpenAI or Claude (low-cost tier)
+Chat, context gathering, recommendations
+Generation AI
+OpenAI or Claude (higher-quality tier)
+SATS / meditation / subliminal scripts
+Text-to-speech
+ElevenLabs
+Narration from generated scripts
+Payments
+RevenueCat + App Store IAP
+Subscriptions, trial, entitlements
+Dev environment
+Cursor
+Primary IDE
+
+RevenueCat is confirmed as the subscriptions backbone. It manages the App Store subscription products, the 3-day trial with upfront payment, receipt validation, and cross-device entitlement sync, and it emits server-side webhooks so the backend always knows a user's true subscription state. This removes a large amount of fragile StoreKit plumbing from the build.
+Suno is out of scope for v1. It generates music, not speech, and cannot replace ElevenLabs for any narrated content. It may return later purely as an enhancement for musical background beds under meditations, but nothing at launch depends on it.
+Frequency and ambient audio are not AI. Frequency tracks (sleep, focus, calm, relaxation, manifestation) are DSP-generated tones or preloaded audio assets. Ambient tracks (rain, ocean, forest, brown/white/pink noise, fireplace) are licensed seamless loops. Both are cheap or free to serve and sit outside the credit system — selecting one is essentially picking a file and a duration.
+
+5. Client Application (Expo / React Native)
+The app is a three-tab structure, but almost all engineering effort goes into Home.
+Sleep tab ships as a locked "Coming Soon" screen. It exists to tease the roadmap and should be a static, low-effort view at launch. (The full alarm/briefing/metrics experience is being designed ahead but is not part of v1.)
+Home tab is the product. It is a ChatGPT-style conversation interface with:
+a top bar (greeting, current Journey, profile icon),
+a scrolling message thread between the user and Manii,
+a floating "+" button to create a new Journey,
+a swipe/tap-in sidebar listing all Journeys (create, rename, archive, search),
+quick-action buttons and context-aware suggestion chips (see §7),
+an audio generation confirmation modal that appears before any content is created (see §8).
+The chat needs streaming responses for the conversation AI so replies appear token-by-token and feel fast. Generated audio appears inline in the thread as a playable card once its job completes.
+Profile / settings holds subscription status, narrator voice choice, credit balance, and account controls.
+Client-side concerns to design for:
+Background audio playback (audio continues when the app is backgrounded or the screen is locked) — this requires the correct iOS audio session and Expo background-audio configuration.
+Local caching of generated audio so replaying a session doesn't re-download and feels instant. Generated audio is owned by the user and playable offline once downloaded.
+Optimistic and progressive UI for both chat (streaming) and generation (a "creating your session…" state that resolves into a finished audio card).
+Realtime updates via Supabase subscriptions so the client is notified the moment a generation job finishes, rather than polling.
+
+6. Backend Layer (Supabase)
+Supabase provides four capabilities Manii relies on:
+Auth — user identity and session tokens. Every request from the app carries the user's token so edge functions know who is asking.
+Database — the authoritative store for Journeys, memory, message history, generated-audio metadata, credit balances, and cached subscription state. (Structure is defined in the data-model document.)
+Storage — the audio files themselves, plus any intermediate assets (background beds, ambient loops). Access is controlled so a user can only reach their own generated files.
+Edge Functions — the secure orchestration layer, and the most important backend concept in Manii. These functions are the only place third-party API keys exist. A typical function:
+authenticates the caller,
+checks their subscription entitlement and/or credit balance,
+performs the AI or audio call,
+records the result and decrements credits atomically,
+returns a result or enqueues a job.
+The client can request anything; the edge function decides whether it's allowed and what it costs. This is what makes the "no free tier / metered credits" model enforceable rather than cosmetic.
+Decision point: Supabase Edge Functions (Deno) have execution-time limits that are fine for chat and for kicking off jobs, but heavy audio mixing of long sessions (narration + background bed + looping to 60/90/120 min or 8 hours) can exceed them. See §8 and §16.
+
+7. AI Layer — Conversation, Generation & Routing
+Manii runs two distinct AI systems, as the PRD specifies. They are separated because they have opposite cost/latency needs.
+Conversation AI — a low-cost, fast model. It powers everyday chat: answering questions, discussing goals, collecting context, recalling Journey memory, and recommending content. It runs on nearly every message, so it must be cheap and quick. It streams its responses. Under the fair-usage policy it does not normally consume generation credits.
+Generation AI — a higher-quality, more expensive model used only when producing premium content (SATS scripts, meditation scripts, subliminal affirmation sets, audio structure). It runs rarely, produces a carefully structured script, and does consume credits. Its output is text; that text is then handed to ElevenLabs for narration.
+Intent routing via tool-calling
+The conversation model is given a single tool — conceptually create_manii_audio(type, topic, length, narrator). When a user's message implies they want a session ("make me an abundance audio," "create a SATS for my promotion"), the model calls this tool with whatever parameters it can infer. Crucially:
+The tool call does not generate anything. It resolves intent and returns inferred parameters, which open the confirmation modal pre-filled (see §8). Generation only fires on the user's explicit confirmation.
+A quick button and free-typed text resolve to the same path. Tapping "Create money audio" is just a pre-filled version of typing the request — both land on the same tool and the same modal.
+The model can never be "wrong enough" to cost money, because it can't complete a generation on its own. Misrouting at worst opens a modal the user can dismiss.
+Questions like "how does SATS work?" stay in the cheap conversation model and never touch the tool. This routing logic lives in the edge-function layer and is one of the more important pieces of product logic to get right.
+Follow-up questions and suggestion chips
+Two related behaviours come from prompt design on the conversation model:
+End-of-response follow-ups. Where it's contextually useful, Manii ends a reply with a relevant question that moves the Journey forward — mirroring ChatGPT's conversational feel. A light guardrail keeps these from becoming repetitive or naggy.
+Suggestion chips. Alongside a small set of static quick actions ("New SATS," "Create audio"), the model surfaces dynamic context-aware chips — e.g. after a conversation about money stress, a "Create abundance audio" chip appears. Tapping a chip runs the same tool-call → modal path as everything else.
+
+8. Audio Generation Pipeline
+This is the most complex flow in the system. It is triggered by human confirmation and runs asynchronously end-to-end.
+User request  →  Conversation AI calls create_manii_audio tool  (infers params)
+      │
+      ▼
+[Confirmation modal]  user reviews/edits type, topic, length, narrator → Confirm
+      │  ── dismiss → nothing happens, no credits spent
+      ▼
+[1] Entitlement + credit check     (enough credits? plan allows this length?)
+      │  ── fail → prompt to subscribe / buy credits / wait
+      ▼
+[2] Script generation (Generation AI)   → structured narration script
+      │
+      ▼
+[3] Text-to-speech (ElevenLabs)         → spoken audio for the script
+      │
+      ▼
+[4] Audio assembly                       → narration + background bed/ambient,
+      │                                     looped/extended to target length
+      ▼
+[5] Store file + metadata, decrement credits, notify client (realtime)
+      │
+      ▼
+Playable audio card appears in the Home thread
+
+Key behaviours:
+Human confirmation gates every generation. The modal is the single point where spend is authorised. This gives the user real control (adjusting length, narrator, focus) and makes it structurally impossible for the AI to burn credits by misunderstanding a message.
+It's a job, not a request. Steps 2–4 can take from seconds to minutes. The client submits the request, sees a progress state, and is notified via Supabase realtime when the audio is ready.
+Concurrency — the "deep research" model. While a generation is running, only that conversation's input is locked (with a clear in-progress state). The rest of the app stays fully usable — the user can browse other Journeys, chat in them, and play existing audio. This mirrors how ChatGPT's long-running tasks behave and keeps the app from ever feeling frozen.
+Long audio uses looping, not full-length generation. Generating 8 hours of unique narration would be absurdly expensive. Instead, a session's spoken content is generated once and then intelligently extended — looping narration and/or background bed with appropriate spacing to reach 60/90/120-minute or 8-hour targets. This is the single biggest cost-control lever in the pipeline.
+Content types have different pipelines:
+SATS / Guided Meditation / Subliminal — full pipeline: AI script → ElevenLabs → assembly. Consumes credits.
+Ambient (rain, ocean, forest, noise colours, fireplace) — no AI, no TTS. Pre-licensed seamless loops; selecting one is picking a file and a duration. Cheap/free, outside credits.
+Frequency (sleep, focus, calm, relaxation, manifestation) — DSP-generated tones or preloaded assets, not AI. Cheap/free, outside credits.
+Where does mixing run? Combining narration with a background bed and looping it to length is real audio processing (typically ffmpeg). Deno edge functions may not be the right place for the heavy, long cases. The realistic options are a lightweight edge-function path for short sessions and a dedicated worker (e.g., a small Node service on a host like Fly.io or Railway, or a queue-backed function) for long ones. This needs a decision before building long-form audio — see §16.
+
+9. Audio Playback & Delivery
+Once generated, audio is stored and served to the user's device. Design goals:
+Unlimited replay, zero credits. Listening never costs credits — only generating does. Playback logic must never touch the credit system.
+Download + offline playback. Generated audio belongs to the user; they can play it without a connection once cached locally.
+Background & lock-screen playback with proper media controls and an iOS audio session configured for background use.
+Retention after cancellation. Per the PRD, a cancelled subscriber keeps playback access to already-generated audio, but loses the ability to generate new content or update Journey memory. Playback therefore must not depend on an active-subscription check, while generation must.
+
+10. Journey Memory System
+Memory is two-tier, modelled on how ChatGPT separates per-project memory from a user's global memory:
+Journey memory (project scope). Each Journey holds its own accumulated context — goals, prior conversation, manifestation history, generated audios, preferences, and important details specific to that area of life. This is what makes every new generation inside a Journey build on everything before it.
+Global user memory (account scope). Durable facts that apply across every Journey — the user's preferred narrator, tone preferences, broad life context, recurring themes. These travel with the user everywhere in the app.
+The technical job is to turn accumulated memory into useful prompt context without stuffing an ever-growing transcript into every request (which gets expensive and eventually impossible). The pattern:
+Extract durable facts from conversations ("aiming for a promotion," "prefers a calm narrator," "manifesting a €10k month").
+Store each fact at the right scope — Journey or global user.
+Retrieve the relevant subset for a given request and inject it into the prompt, rather than replaying the entire history.
+This delivers the PRD's promise that the user "never repeats themselves" and the app "feels like speaking to someone who knows your life."
+Note: ChatGPT-style memory is a product pattern we build, not an API switch. The provider APIs give the raw model; the extract → store → retrieve loop above is ours to implement. The exact storage and retrieval mechanics are defined in the data-model document.
+
+11. Subscriptions, Trial & Entitlements
+Manii is subscription-only with no permanent free tier. Every new user gets a 3-day Premium trial that requires selecting a plan and providing payment up front; they aren't charged until the trial ends.
+RevenueCat is the backbone:
+It manages the App Store subscription products, the trial, and receipt validation.
+It exposes a simple entitlement (premium / premium_plus) the app reads to unlock or gate features.
+Its server-side webhooks notify the backend of purchases, renewals, cancellations, and expirations, so the database's cached subscription state stays accurate and edge functions can gate generation reliably.
+Trial limits (full premium experience, but capped) are enforced server-side:
+up to 20 AI conversations,
+2 premium audio generations,
+max 30-minute audio length,
+1 active Journey.
+When a trial limit is hit, the app prompts the user to subscribe now or wait for the trial to end. Because these limits gate cost, they are checked in the edge-function layer, never merely hidden in the UI.
+Two tiers at launch: Premium and Premium+ (larger credit allowance, higher generation limits, priority generation, premium narrator voices, early access). Pricing is indicative and may be tuned after AI-cost testing.
+Cancellation behaviour: keep playback of existing audio; disable new conversations, new generation, memory updates, coaching, and future features.
+
+12. AI Credit System
+Rather than capping users by "number of audios," Manii meters AI Generation Credits, consumed whenever a generation incurs meaningful cost (SATS, meditation, subliminal, long-form audio, future premium AI features). Conversation is effectively unlimited under fair usage and doesn't normally consume credits. Ambient and frequency audio are excluded, since they don't invoke expensive AI.
+Technical requirements:
+Credits are authoritative in the database and decremented server-side, atomically. The check-and-decrement must be a single safe operation so a user can't fire off many concurrent requests and overspend a balance (a classic race condition).
+Each plan grants a monthly allowance, reset per billing cycle. Unused credits don't roll over unless a future benefit says so.
+Add-on credit packs (small / medium / large) can be purchased to top up without upgrading tiers — these flow through RevenueCat/IAP and add to the balance.
+Cost mapping is centralised. Each generation type/length maps to a credit cost in one place, so pricing can be retuned after cost testing without hunting through the codebase.
+Commitment-based credit pricing
+Both the monthly credit allowance and add-on pack pricing scale by plan and billing period — annual subscribers get the best credit rate, weekly the least. This nudges users toward annual (better cash upfront, lower churn, higher lifetime value) as an honest value exchange rather than a dark pattern. Two guardrails:
+Keep the matrix simple. Tier × billing period can explode into confusing pricing, and confusing pricing is itself the thing that kills conversion.
+Don't make weekly feel punitive — weekly is often the low-commitment plan that converts hesitant users.
+Allowances and pack prices are configuration keyed by tier and billing period, so they can be tuned after cost testing without code changes.
+The credit ledger effectively is the cost-control system. Getting the atomic decrement and the cost mapping right is more important than almost any UI detail.
+
+13. Security & Secrets
+No third-party keys in the client — ever. OpenAI, Claude, and ElevenLabs keys live only in edge-function environment variables. A leaked key in a shipped app is a direct, unbounded financial liability.
+Every paid action is authenticated and authorised at the edge before any provider is called.
+Generation requires human confirmation — the AI cannot spend credits autonomously.
+Users can only access their own data and audio. Enforced by access rules at the database/storage layer (detailed in the data-model document).
+Subscription state is verified server-side via RevenueCat webhooks and validated receipts — never trusted from the client alone.
+Fail closed: if entitlement or credit status can't be confirmed, deny the action.
+
+14. Environments & Configuration
+Maintain separate development and production Supabase projects and provider keys so testing never touches real users, real spend, or production data.
+All secrets are environment variables in the edge-function runtime, not committed to the repo.
+Use sandbox/test modes for App Store IAP and RevenueCat during development, and test the full trial → charge → cancel lifecycle before launch.
+Keep swappable choices in configuration: conversation/generation model selection, credit-cost mappings, and the credit allowance/pack-price matrix by tier and billing period — so all of these can change after cost testing without code surgery.
+
+15. Third-Party Services Summary
+Service
+Used for
+Where it's called
+Notes
+Supabase
+Auth, DB, storage, functions, realtime
+Core backend
+Authoritative state lives here
+OpenAI / Claude (low-cost)
+Conversation AI + tool-calling
+Edge function
+Fast, cheap, streams, runs often
+OpenAI / Claude (high-quality)
+Generation AI (scripts)
+Edge function
+Expensive, rare, consumes credits
+ElevenLabs
+Text-to-speech narration
+Edge function / worker
+Turns scripts into spoken audio
+RevenueCat
+Subscriptions, trial, entitlements
+Client SDK + webhooks
+Confirmed; handles IAP + entitlement sync
+App Store IAP
+Payment processing
+Via RevenueCat
+Sandbox-test the full lifecycle
+Expo
+The app itself
+Client
+Background audio config required
+Cursor
+Development
+—
+Primary IDE
+
+Out of scope for v1: Suno (music beds only; possible future enhancement).
+
+16. Key Technical Decisions & Risks
+Resolved since v1.0:
+✅ RevenueCat is the subscriptions/trial/entitlements backbone.
+✅ Suno is out for v1; not a launch dependency.
+✅ Memory is two-tier (Journey scope + global user scope), built with an extract → store → retrieve pattern.
+✅ Generation is triggered by AI tool-calling into a human-confirmed modal — the model never spends credits alone.
+✅ Concurrency follows the "deep research" model: only the active conversation's input locks; the rest of the app stays usable.
+✅ Frequency = DSP/preloaded, ambient = licensed loops, both outside the credit system.
+✅ Credit allowances and pack pricing scale by plan and billing period, config-driven.
+Still open — resolve before the affected build phase:
+Where long-form audio mixing runs. Edge functions may not handle mixing + looping for 60–120 min and 8-hour sessions within their limits. Decide between a dedicated worker service and a constrained edge-function approach before building long audio. (High impact.)
+Conversation vs generation model selection. Pick the specific low-cost and high-quality models, keep them swappable via config, since cost testing may change the choice.
+Exact credit-cost numbers and the allowance/pack matrix values — a business decision after cost testing. The mechanism is settled; the numbers aren't.
+Memory summarisation specifics. How facts are extracted, scoped, and retrieved needs concrete definition in the data-model phase.
+
+17. Suggested Build Sequencing
+A pragmatic order that de-risks the hardest parts early without blocking on them:
+Foundations — Expo app shell with the three tabs, Supabase auth, and the Home chat UI wired to the conversation AI through an edge function (no generation yet). Proves the secure-proxy pattern end to end.
+Journeys & memory — creating/listing/renaming/archiving Journeys, plus the two-tier extract → store → retrieve memory loop that feeds context back into chat.
+Generation trigger + pipeline (short audio first) — tool-calling → confirmation modal → script generation → ElevenLabs → simple assembly → playable card, capped at short lengths to sidestep the mixing/worker question initially.
+Credits & subscriptions — RevenueCat integration, trial enforcement, entitlement gating, the atomic credit ledger, and the commitment-based allowance/pack matrix.
+Long-form audio & looping — introduce the worker/mixing approach for 60 min → 8 hour sessions.
+Ambient & frequency library — asset-based and DSP content types.
+Polish — background playback, offline caching, sidebar search, suggestion chips, and the design language (dark-first, muted purples/mauves, warm whites, large spacing).
+Sleep tab — remains a "Coming Soon" placeholder until post-launch.
+
+End of Technical Overview. Database tables, schemas, and security policies are specified separately in the data-model document.
+
